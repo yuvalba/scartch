@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local Slot Demo</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #20232a;
+            color: white;
+        }
+
+        .slot-machine {
+            background: #282c34;
+            padding: 20px;
+            border-radius: 15px;
+            border: 4px solid #61dafb;
+            box-shadow: 0 0 20px rgba(97, 218, 251, 0.3);
+        }
+
+        .reels-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            background: #000;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .reel {
+            width: 80px;
+            height: 240px;
+            /* 3 symbols * 80px */
+            background: white;
+            color: black;
+            border-radius: 4px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .symbol {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 40px;
+            font-weight: bold;
+            border-bottom: 1px solid #eee;
+            box-sizing: border-box;
+        }
+
+        .controls {
+            text-align: center;
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            background-color: #61dafb;
+            color: #20232a;
+            border: none;
+            border-radius: 25px;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background-color: #4fa8d1;
+            transform: scale(1.05);
+        }
+
+        button:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #status {
+            margin-top: 15px;
+            height: 24px;
+            font-size: 18px;
+            color: #61dafb;
+        }
+
+        .win-animation {
+            animation: pulse 0.5s infinite;
+            color: #ffd700 !important;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="slot-machine">
+        <div class="reels-container">
+            <div class="reel" id="reel1">
+                <div class="symbol">?</div>
+                <div class="symbol">?</div>
+                <div class="symbol">?</div>
+            </div>
+            <div class="reel" id="reel2">
+                <div class="symbol">?</div>
+                <div class="symbol">?</div>
+                <div class="symbol">?</div>
+            </div>
+            <div class="reel" id="reel3">
+                <div class="symbol">?</div>
+                <div class="symbol">?</div>
+                <div class="symbol">?</div>
+            </div>
+        </div>
+        <div class="controls">
+            <button id="spinBtn">SPIN</button>
+            <div id="status">Ready to play</div>
+        </div>
+    </div>
+
+    <script>
+        const spinBtn = document.getElementById('spinBtn');
+        const statusDiv = document.getElementById('status');
+        const reels = [
+            document.getElementById('reel1'),
+            document.getElementById('reel2'),
+            document.getElementById('reel3')
+        ];
+
+        // Helper to update reel symbols
+        function updateReel(reelIndex, symbols) {
+            const reel = reels[reelIndex];
+            reel.innerHTML = '';
+            symbols.forEach(sym => {
+                const div = document.createElement('div');
+                div.className = 'symbol';
+                div.textContent = sym;
+                reel.appendChild(div);
+            });
+        }
+
+        // Parse scenario string "ABC,DEF,GHI..." -> [['A','B','C'], ['D','E','F'], ['G','H','I']]
+        function parseScenario(scenarioStr) {
+            // Take first 3 parts separated by comma
+            const parts = scenarioStr.split(',').slice(0, 3);
+            return parts.map(part => part.split('').slice(0, 3)); // Ensure 3 chars
+        }
+
+        function setStatus(msg, isWin = false) {
+            statusDiv.textContent = msg;
+            if (isWin) statusDiv.classList.add('win-animation');
+            else statusDiv.classList.remove('win-animation');
+        }
+
+        async function spin() {
+            if (!window.parent || !window.parent.EQL) {
+                setStatus('Error: EQL Wrapper not found');
+                return;
+            }
+
+            spinBtn.disabled = true;
+            setStatus('Spinning...');
+
+            // Visual spin effect (random symbols)
+            const spinInterval = setInterval(() => {
+                reels.forEach((_, i) => {
+                    const randomSyms = Array(3).fill(0).map(() => String.fromCharCode(65 + Math.floor(Math.random() * 6)));
+                    updateReel(i, randomSyms);
+                });
+            }, 100);
+
+            try {
+                // Call Wager
+                const result = await window.parent.EQL.Wager(100);
+
+                // Stop visual spin
+                clearInterval(spinInterval);
+
+                // Parse result
+                // Assuming scenario format like "ABC,DEF,GHI"
+                // If scenario is complex string, we might need robust parsing. 
+                // For now, let's assume the mock returns something usable or we fallback.
+                let reelSymbols = [['?', '?', '?'], ['?', '?', '?'], ['?', '?', '?']];
+
+                if (result.scenario) {
+                    try {
+                        reelSymbols = parseScenario(result.scenario);
+                    } catch (e) {
+                        console.error("Parse error", e);
+                    }
+                }
+
+                // Update reels with result
+                reelSymbols.forEach((syms, i) => {
+                    // Ensure we have 3 symbols, pad if needed
+                    while (syms.length < 3) syms.push('?');
+                    updateReel(i, syms);
+                });
+
+                if (result.won > 0) {
+                    setStatus(`BIG WIN! $${(result.won / 100).toFixed(2)}`, true);
+                } else {
+                    setStatus('Try Again', false);
+                }
+
+            } catch (error) {
+                clearInterval(spinInterval);
+                setStatus('Error: ' + error.message);
+            } finally {
+                spinBtn.disabled = false;
+            }
+        }
+
+        spinBtn.addEventListener('click', spin);
+    </script>
+</body>
+
+</html>

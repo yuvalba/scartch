@@ -146,7 +146,11 @@ function App() {
         console.log('EQL API initialized');
     }, [currencyCode, currencySymbol, languageCode, playMode]);
 
-    const contentUrl = process.env.REACT_APP_CONTENT_URL || 'http://localhost:8000/game/SLOTDEMO/index.html';
+    // Determine content URL based on mock mode
+    const USE_MOCK = process.env.REACT_APP_USE_MOCK === 'true';
+    const contentUrl = USE_MOCK
+        ? (process.env.REACT_APP_MOCK_CONTENT_URL || 'http://localhost:3000/game/SLOTDEMO/index.html')
+        : (process.env.REACT_APP_CONTENT_URL || 'http://localhost:3000/game/SLOTDEMO/index.html');
 
     return (
         <div className="App">

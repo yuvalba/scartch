@@ -1,4 +1,7 @@
 
+
+import { mockServer } from './MockServer';
+
 class EQLWrapper {
     constructor(targetWindow = window) {
         this.window = targetWindow;
@@ -13,6 +16,7 @@ class EQLWrapper {
         this.playbackData = null;
         this.bonusRounds = [];
         this.apiUrl = process.env.REACT_APP_API_URL || 'https://api.eql.games/api/v1';
+        this.useMock = process.env.REACT_APP_USE_MOCK === 'true';
 
         // Bind methods
         this.Wager = this.Wager.bind(this);
@@ -46,6 +50,25 @@ class EQLWrapper {
 
     async Wager(amount, callback, lines = 1, playbackData = null) {
         console.log(`[EQL] Wager: ${amount}, lines: ${lines}`);
+
+        if (this.useMock) {
+            console.log('[EQL] Using Mock Server for Wager');
+            try {
+                const result = await mockServer.wager(amount, lines);
+                // Simulate network delay
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                if (result.balance !== undefined) this.balance = result.balance;
+                this.cost += amount;
+
+                if (callback) callback(result);
+                return;
+            } catch (error) {
+                console.error('[EQL] Mock Wager failed:', error);
+                if (callback) callback({ error: error.message });
+                return;
+            }
+        }
 
         // In a real implementation, we would POST to the API
         // For now, we'll simulate the API call structure as if we were calling it
@@ -93,6 +116,14 @@ class EQLWrapper {
 
     async Update(transactionId, data, callback) {
         console.log(`[EQL] Update transaction: ${transactionId}`);
+
+        if (this.useMock) {
+            // Mock server doesn't have explicit update yet, just ack
+            console.log('[EQL] Using Mock Server for Update');
+            if (callback) callback({ success: true });
+            return { success: true };
+        }
+
         try {
             const response = await fetch(`${this.apiUrl}/transaction/${transactionId}`, {
                 method: 'PUT', // or POST/PATCH depending on API
@@ -111,6 +142,26 @@ class EQLWrapper {
 
     async Settle(tickets, callback) {
         console.log('[EQL] Settle tickets:', tickets);
+
+        if (this.useMock) {
+            console.log('[EQL] Using Mock Server for Settle');
+            try {
+                // Mock settle just acks
+                const result = await mockServer.settle(tickets[0]); // Simplified for single ticket
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                if (result.totalWin) this.wins += result.totalWin;
+                if (result.balance) this.balance = result.balance;
+
+                if (callback) callback(result);
+                return;
+            } catch (error) {
+                console.error('[EQL] Mock Settle failed:', error);
+                if (callback) callback({ error: error.message });
+                return;
+            }
+        }
+
         try {
             const response = await fetch(`${this.apiUrl}/settle`, {
                 method: 'POST',

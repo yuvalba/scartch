@@ -40,5 +40,20 @@
                 "scenario": "PQR,STU,VWX,YZA,BCD,EFG:B040506|X0,X2,X1"
             }
         ]
+    },
+    {
+        "win": 0,
+        "n": 20,
+        "scenarios": [
+            {
+                "scenario": "ABC,DEF,GHI:L01|X0,X0,X0"
+            },
+            {
+                "scenario": "RND,RND,RND:L02|X0,X0,X0"
+            },
+            {
+                "scenario": "LOSE,LOSE,LOSE:L03|X0,X0,X0"
+            }
+        ]
     }
 ]

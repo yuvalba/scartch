@@ -1,5 +1,8 @@
 
+import { mockServer } from '../eql/MockServer';
+
 const API_URL = process.env.REACT_APP_API_URL || 'https://api.eql.games/api/v1';
+const USE_MOCK = process.env.REACT_APP_USE_MOCK === 'true';
 
 let balance = 10000; // Default starting balance (cents)
 let wins = 0;
@@ -11,6 +14,22 @@ export const wager = async (amount, lines = 1, playbackData = null) => {
     // Optimistic update
     balance -= amount;
     cost += amount;
+
+    if (USE_MOCK) {
+        console.log('[API] Using Mock Server for Wager');
+        try {
+            const result = await mockServer.wager(amount, lines);
+            // Simulate network delay
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            if (result.balance !== undefined) balance = result.balance;
+
+            return result;
+        } catch (error) {
+            console.error('[API] Mock Wager failed:', error);
+            throw error;
+        }
+    }
 
     try {
         const response = await fetch(`${API_URL}/wager`, {
@@ -39,6 +58,12 @@ export const wager = async (amount, lines = 1, playbackData = null) => {
 
 export const update = async (transactionId, data) => {
     console.log(`[API] Update: ${transactionId}`);
+
+    if (USE_MOCK) {
+        console.log('[API] Using Mock Server for Update');
+        return { success: true };
+    }
+
     try {
         const response = await fetch(`${API_URL}/transaction/${transactionId}`, {
             method: 'PUT',
@@ -55,6 +80,26 @@ export const update = async (transactionId, data) => {
 
 export const settle = async (tickets) => {
     console.log('[API] Settle:', tickets);
+
+    if (USE_MOCK) {
+        console.log('[API] Using Mock Server for Settle');
+        try {
+            const result = await mockServer.settle(tickets[0]);
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            if (result.totalWin) {
+                wins += result.totalWin;
+                balance += result.totalWin;
+            }
+            if (result.balance !== undefined) balance = result.balance;
+
+            return result;
+        } catch (error) {
+            console.error('[API] Mock Settle failed:', error);
+            throw error;
+        }
+    }
+
     try {
         const response = await fetch(`${API_URL}/settle`, {
             method: 'POST',
