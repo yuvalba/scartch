@@ -1,0 +1,44 @@
+[
+    {
+        "win": 500000,
+        "n": 4,
+        "scenarios": [
+            {
+                "scenario": "CDD,DBF,XCC,fDGX,WBC,EAX:f10|X2,X2,X0"
+            },
+            {
+                "scenario": "WFAEC,AAAXBA,CWFG,EAHA,XDW,BXF:A01030405060811|X0,X2,X0"
+            },
+            {
+                "scenario": "BAHA,AAWAFC,GABB,BWACG,DGAB,DAB:A0204050608111215|"
+            },
+            {
+                "scenario": "dFfBX,CBH,XGF,XAG,EWD,ABA:d01:f03|X0,X1,X0"
+            }
+        ]
+    },
+    {
+        "win": 250000,
+        "n": 8,
+        "scenarios": [
+            {
+                "scenario": "ADW,GAX,CFC,EXG,aDeCH,cBWX:a13:e15:c16|X2,X0,X2"
+            },
+            {
+                "scenario": "GXAD,WAAECE,FAADX,CGAG,HFX,EBE:A03040506080912|X0,X0,X2"
+            }
+        ]
+    },
+    {
+        "win": 100000,
+        "n": 12,
+        "scenarios": [
+            {
+                "scenario": "XYZ,ABC,DEF,GHI,JKL,MNO:A010203|X1,X1,X1"
+            },
+            {
+                "scenario": "PQR,STU,VWX,YZA,BCD,EFG:B040506|X0,X2,X1"
+            }
+        ]
+    }
+]
